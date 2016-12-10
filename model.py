@@ -5,7 +5,7 @@ import json
 import os.path
 import pickle
 from keras.models import Sequential
-from keras.layers import Dense, Activation, Convolution2D, Flatten, Lambda
+from keras.layers import Dense, Activation, Convolution2D, Flatten, Lambda, Dropout
 from keras.optimizers import Adam
 import tensorflow as tf
 
@@ -68,17 +68,21 @@ img_shape = (20,64,3)
 
 model = Sequential([
 		Convolution2D(nb_filter=32,nb_row=5,nb_col=5,input_shape=img_shape),
+		Dropout(.5),
 		Convolution2D(32, 5, 5, subsample=(2, 2), border_mode="same"),
+		Dropout(.5),
 		Convolution2D(32, 5, 5, subsample=(2, 2), border_mode="same"),
+		Dropout(.5),
         Flatten(),
         Dense(32,activation='tanh'),
+        Dropout(.5),
         Dense(1,activation='tanh')
     ])
 
 my_adam = Adam(lr=lr)
 model.summary()
 model.compile(optimizer=my_adam,loss='mse')
-model.fit(X_train, y_train, nb_epoch=nb_epoch,validation_split=0.05, shuffle=True)
+model.fit(X_train, y_train, nb_epoch=nb_epoch,validation_split=0.1, shuffle=True)
 
 # save model
 
