@@ -31,7 +31,7 @@ else:
 	# for labels y_train, this is by initializing an array of the right length and updating values
 	# for feature data X_train, this is by contatenating images and reshaping into an array of images
 	print('Reading images.')
-	num_images = 1725
+	num_images = 1725 #1725 total
 	y_train = np.zeros(num_images)
 
 	for i,row in enumerate(driving_log):
@@ -57,16 +57,13 @@ else:
 
 	X_train = normalize(X_train)
 
-	# print('Pickling data')
+#	print('Pickling data')
 
-	# # pickle
-	# training_data = {'X_train': X_train, 'y_train': y_train}
-	# pickle.dump(training_data, open('training_data.p','wb'))
+	# pickle
+#	training_data = {'X_train': X_train, 'y_train': y_train}
+#	pickle.dump(training_data, open('training_data.p','wb'))
 
-	# print('Read training data and pickled it')
-
-
-
+#	print('Read training data and pickled it')
 
 # model
 
@@ -79,9 +76,10 @@ model = Sequential([
         Dense(1,activation='tanh')
     ])
 
-my_adam = Adam(lr=0.00000001)
+my_adam = Adam(lr=0.0000001)
+model.summary()
 model.compile(optimizer=my_adam,loss='mae')
-model.fit(X_train, y_train, nb_epoch=1,validation_split=0.05, shuffle=True)
+model.fit(X_train, y_train, nb_epoch=10,validation_split=0.05, shuffle=True)
 
 # save model
 
