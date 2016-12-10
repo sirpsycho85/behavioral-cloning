@@ -19,45 +19,47 @@ dropout = 0
 # Load and preprocess data
 
 # if pickled training data already exists, unpickle. Otherwise use the log to read training data and pickle it
-if(os.path.exists('training_data.p')):
-	training_data = pickle.load(open('training_data.p','rb'))
-	X_train, y_train = training_data['X_train'], training_data['y_train']
-else:
-	# import csv into list of lists of strings, cells accessible as data[][]
-	with open('driving_log.csv','r') as f:
-		datareader = csv.reader(f,delimiter=',')
-		driving_log = []
-		for row in datareader:
-			driving_log.append(row)
+# if(os.path.exists('training_data.p')):
+# 	training_data = pickle.load(open('training_data.p','rb'))
+# 	X_train, y_train = training_data['X_train'], training_data['y_train']
+# else:
+	
+# import csv into list of lists of strings, cells accessible as data[][]
+driving_log = []
 
-	# use csv data to set X to the images and y to the steering angles
-	# for labels y_train, this is by initializing an array of the right length and updating values
-	# for feature data X_train, this is by contatenating images and reshaping into an array of images
-	num_images = 1725 #1725 total
-	y_train = np.zeros(num_images)
+with open('driving_log.csv','r') as f:
+	datareader = csv.reader(f,delimiter=',')
+	for row in datareader:
+		driving_log.append(row)
 
-	for i,row in enumerate(driving_log):
-		image = cv2.imread(driving_log[i][0])
-		image = imresize(image, (32,64,3))[12:,:,:]
-		if(i % 100) == 0:
-			print('Images read: ',i)
-		if(i==0):
-			images_concatenated = image
-		elif(i<num_images):
-			images_concatenated = np.concatenate((images_concatenated,image), axis=0)
-		else:
-			break
-		y_train[i] = driving_log[i][3]
+# use csv data to set X to the images and y to the steering angles
+# for labels y_train, this is by initializing an array of the right length and updating values
+# for feature data X_train, this is by contatenating images and reshaping into an array of images
+num_images = 1725 #1725 total
+y_train = np.zeros(num_images)
 
-	X_train = images_concatenated.reshape(-1,20,64,3)
+for i,row in enumerate(driving_log):
+	image = cv2.imread(driving_log[i][0])
+	image = imresize(image, (32,64,3))[12:,:,:]
+	if(i % 100) == 0:
+		print('Images read: ',i)
+	if(i==0):
+		images_concatenated = image
+	elif(i<num_images):
+		images_concatenated = np.concatenate((images_concatenated,image), axis=0)
+	else:
+		break
+	y_train[i] = driving_log[i][3]
 
-	# normalize: mean zero and range -0.5 to 0.5
-	def normalize(X):
-	    X = X - np.mean(X)
-	    a,b,xmin,xmax = -0.5,0.5,np.min(X),np.max(X)
-	    return a+(X-xmin)*(b-a)/(xmax-xmin)
+X_train = images_concatenated.reshape(-1,20,64,3)
 
-	X_train = normalize(X_train)
+# normalize: mean zero and range -0.5 to 0.5
+def normalize(X):
+    X = X - np.mean(X)
+    a,b,xmin,xmax = -0.5,0.5,np.min(X),np.max(X)
+    return a+(X-xmin)*(b-a)/(xmax-xmin)
+
+X_train = normalize(X_train)
 
 	# pickle
 #	training_data = {'X_train': X_train, 'y_train': y_train}
