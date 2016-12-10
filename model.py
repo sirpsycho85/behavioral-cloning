@@ -5,7 +5,7 @@ import json
 import os.path
 import pickle
 from keras.models import Sequential
-from keras.layers import Dense, Activation, Convolution2D, Flatten, Lambda, Dropout
+from keras.layers import Dense, Activation, Convolution2D, Flatten, Lambda, Dropout, BatchNormalization
 from keras.optimizers import Adam
 import tensorflow as tf
 
@@ -14,6 +14,7 @@ from scipy.misc import imresize
 # config
 nb_epoch = 50
 lr = 0.001
+dropout = 0
 
 # Load and preprocess data
 
@@ -66,18 +67,37 @@ else:
 
 img_shape = (20,64,3)
 
-model = Sequential([
-		Convolution2D(nb_filter=32,nb_row=5,nb_col=5,input_shape=img_shape),
-		Dropout(.5),
-		Convolution2D(32, 5, 5, subsample=(2, 2), border_mode="same"),
-		Dropout(.5),
-		Convolution2D(32, 5, 5, subsample=(2, 2), border_mode="same"),
-		Dropout(.5),
-        Flatten(),
-        Dense(32,activation='tanh'),
-        Dropout(.5),
-        Dense(1,activation='tanh')
-    ])
+model = Sequential()
+model.add(BatchNormalization(axis=1, input_shape=(20,64,3)))
+model.add(Convolution2D(16, 3, 3, border_mode='valid', subsample=(2,2), activation='relu'))
+model.add(Convolution2D(24, 3, 3, border_mode='valid', subsample=(1,2), activation='relu'))
+model.add(Convolution2D(36, 3, 3, border_mode='valid', activation='relu'))
+model.add(Convolution2D(48, 2, 2, border_mode='valid', activation='relu'))
+model.add(Convolution2D(48, 2, 2, border_mode='valid', activation='relu'))
+model.add(Flatten())
+model.add(Dense(512))
+model.add(Dropout(dropout))
+model.add(Activation('relu'))
+model.add(Dense(10))
+model.add(Activation('relu'))
+model.add(Dense(1))
+
+
+#model = Sequential([
+#		Convolution2D(16, 3, 3, border_mode='valid', subsample=(2,2), activation='relu',input_shape=img_shape),
+#		Convolution2D(24, 3, 3, border_mode='valid', subsample=(1,2), activation='relu'),
+#		Convolution2D(36, 3, 3, border_mode='valid', activation='relu'),
+#		Convolution3D(48, 2, 2, border_mode='valid', activation='relu'),
+#		Convolution2D(48, 2, 2, border_mode='valid', activation='relu'),
+#		Convolution2D(64, 5, 5, subsample=(2, 2), border_mode="same"),
+#		Dropout(dropout),
+#		Convolution2D(64, 5, 5, subsample=(2, 2), border_mode="same"),
+#		Dropout(dropout),
+ #       Flatten(),
+  #      Dense(128,activation='tanh'),
+   #     Dropout(dropout),
+   #     Dense(1,activation='tanh')
+   # ])
 
 my_adam = Adam(lr=lr)
 model.summary()
