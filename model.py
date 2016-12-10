@@ -11,6 +11,10 @@ import tensorflow as tf
 
 from scipy.misc import imresize
 
+# config
+nb_epoch = 50
+lr = 0.001
+
 # Load and preprocess data
 
 # if pickled training data already exists, unpickle. Otherwise use the log to read training data and pickle it
@@ -71,10 +75,10 @@ model = Sequential([
         Dense(1,activation='tanh')
     ])
 
-my_adam = Adam(lr=0.0000001)
+my_adam = Adam(lr=lr)
 model.summary()
 model.compile(optimizer=my_adam,loss='mse')
-model.fit(X_train, y_train, nb_epoch=1,validation_split=0.05, shuffle=True)
+model.fit(X_train, y_train, nb_epoch=nb_epoch,validation_split=0.05, shuffle=True)
 
 # save model
 
