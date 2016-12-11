@@ -13,8 +13,8 @@ from scipy.misc import imresize
 
 # config
 nb_epoch = 50
-lr = 0.00005
-dropout = 0.5
+lr = 1e2 #0.00005
+dropout = 0
 
 # Load and preprocess data
 
@@ -73,12 +73,18 @@ X_train = normalize(X_train)
 img_shape = (20,64,3)
 
 model = Sequential()
-model.add(BatchNormalization(axis=1, input_shape=(20,64,3)))
+#model.add(BatchNormalization(axis=1, input_shape=(20,64,3)))
+model.add(BatchNormalization(input_shape=(20,64,3)))
 model.add(Convolution2D(24, 5, 5, border_mode='valid', activation='relu'))
+model.add(BatchNormalization())
 model.add(Convolution2D(36, 5, 5, border_mode='valid', activation='relu'))
+model.add(BatchNormalization())
 model.add(Convolution2D(48, 3, 3, border_mode='valid', activation='relu'))
+model.add(BatchNormalization())
 model.add(Convolution2D(64, 3, 3, border_mode='valid', activation='relu'))
+model.add(BatchNormalization())
 model.add(Convolution2D(64, 3, 3, border_mode='valid', activation='relu'))
+model.add(BatchNormalization())
 model.add(Flatten())
 model.add(Dense(1164))
 model.add(Dropout(dropout))
