@@ -52,7 +52,9 @@ for i,row in enumerate(driving_log):
 		break
 	y_train[i] = driving_log[i][3]
 
+images_concatenated = np.concatenate((images_concatenated,np.fliplr(images_concatenated)), axis=0)
 X_train = images_concatenated.reshape(-1,20,64,3)
+y_train = np.concatenate((y_train,-1*y_train), axis=0)
 
 # normalize: mean zero and range -0.5 to 0.5
 def normalize(X):
