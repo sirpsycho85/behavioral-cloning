@@ -14,7 +14,7 @@ from scipy.misc import imresize
 # config
 nb_epoch = 50
 lr = 2e-3 #0.00005
-dropout = 0
+dropout = 0.5
 
 # Load and preprocess data
 
@@ -34,7 +34,7 @@ with open('driving_log.csv','r') as f:
 		num_images += 1
 
 # override num images
-num_images = 100
+num_images = 1000
 
 
 # use csv data to set X to the images and y to the steering angles
@@ -98,11 +98,11 @@ model.add(ZeroPadding2D((1, 1)))
 model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_2'))
 model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
-# model.add(ZeroPadding2D((1, 1)))
-# model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_1'))
-# model.add(ZeroPadding2D((1, 1)))
-# model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_2'))
-# model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+model.add(ZeroPadding2D((1, 1)))
+model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_1'))
+model.add(ZeroPadding2D((1, 1)))
+model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_2'))
+model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
 # model.add(ZeroPadding2D((1, 1)))
 # model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_1'))
@@ -131,7 +131,7 @@ model.add(MaxPooling2D((2, 2), strides=(2, 2)))
 
 model.add(Flatten())
 # model.add(Dense(1164))
-# model.add(Dropout(dropout))
+model.add(Dropout(dropout))
 # model.add(Dense(100))
 # model.add(Dense(50))
 model.add(Dense(10))
