@@ -5,7 +5,7 @@ import json
 import os.path
 import pickle
 from keras.models import Sequential
-from keras.layers import Dense, Activation, Convolution2D, Flatten, Lambda, Dropout, BatchNormalization
+from keras.layers import Dense, Activation, Convolution2D, Flatten, Lambda, Dropout, BatchNormalization, ZeroPadding2D, MaxPooling2D
 from keras.optimizers import Adam
 import tensorflow as tf
 
@@ -13,7 +13,7 @@ from scipy.misc import imresize
 
 # config
 nb_epoch = 50
-lr = 1e2 #0.00005
+lr = 2e-3 #0.00005
 dropout = 0
 
 # Load and preprocess data
@@ -32,6 +32,10 @@ with open('driving_log.csv','r') as f:
 	for row in datareader:
 		driving_log.append(row)
 		num_images += 1
+
+# override num images
+num_images = 100
+
 
 # use csv data to set X to the images and y to the steering angles
 # for labels y_train, this is by initializing an array of the right length and updating values
@@ -64,6 +68,8 @@ def normalize(X):
 
 X_train = normalize(X_train)
 
+print('max y_train = ',max(y_train))
+
 	# pickle
 #	training_data = {'X_train': X_train, 'y_train': y_train}
 #	pickle.dump(training_data, open('training_data.p','wb'))
@@ -75,40 +81,62 @@ img_shape = (20,64,3)
 model = Sequential()
 #model.add(BatchNormalization(axis=1, input_shape=(20,64,3)))
 model.add(BatchNormalization(input_shape=(20,64,3)))
-model.add(Convolution2D(24, 5, 5, border_mode='valid', activation='relu'))
-model.add(BatchNormalization())
-model.add(Convolution2D(36, 5, 5, border_mode='valid', activation='relu'))
-model.add(BatchNormalization())
-model.add(Convolution2D(48, 3, 3, border_mode='valid', activation='relu'))
-model.add(BatchNormalization())
-model.add(Convolution2D(64, 3, 3, border_mode='valid', activation='relu'))
-model.add(BatchNormalization())
-model.add(Convolution2D(64, 3, 3, border_mode='valid', activation='relu'))
-model.add(BatchNormalization())
+# model.add(Convolution2D(24, 5, 5, border_mode='valid', activation='relu',input_shape=(20,64,3)))
+# # model.add(BatchNormalization())
+# model.add(Convolution2D(36, 5, 5, border_mode='valid', activation='relu'))
+# # model.add(BatchNormalization())
+# model.add(Convolution2D(48, 3, 3, border_mode='valid', activation='relu'))
+# # model.add(BatchNormalization())
+# model.add(Convolution2D(64, 3, 3, border_mode='valid', activation='relu'))
+# # model.add(BatchNormalization())
+# model.add(Convolution2D(64, 3, 3, border_mode='valid', activation='relu'))
+# model.add(BatchNormalization())
+
+
+model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_1', input_shape=(20,64,3)))
+model.add(ZeroPadding2D((1, 1)))
+model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_2'))
+model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+
+# model.add(ZeroPadding2D((1, 1)))
+# model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_1'))
+# model.add(ZeroPadding2D((1, 1)))
+# model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_2'))
+# model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+
+# model.add(ZeroPadding2D((1, 1)))
+# model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_1'))
+# model.add(ZeroPadding2D((1, 1)))
+# model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_2'))
+# model.add(ZeroPadding2D((1, 1)))
+# model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_3'))
+# model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+
+# model.add(ZeroPadding2D((1, 1)))
+# model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_1'))
+# model.add(ZeroPadding2D((1, 1)))
+# model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_2'))
+# model.add(ZeroPadding2D((1, 1)))
+# model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_3'))
+# model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+
+# model.add(ZeroPadding2D((1, 1)))
+# model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_1'))
+# model.add(ZeroPadding2D((1, 1)))
+# model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_2'))
+# model.add(ZeroPadding2D((1, 1)))
+# model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_3'))
+# model.add(MaxPooling2D((2, 2), strides=(2, 2)))
+
+
 model.add(Flatten())
-model.add(Dense(1164))
-model.add(Dropout(dropout))
-model.add(Dense(100))
-model.add(Dense(50))
+# model.add(Dense(1164))
+# model.add(Dropout(dropout))
+# model.add(Dense(100))
+# model.add(Dense(50))
 model.add(Dense(10))
 model.add(Dense(1,activation='tanh'))
 
-
-#model = Sequential([
-#		Convolution2D(16, 3, 3, border_mode='valid', subsample=(2,2), activation='relu',input_shape=img_shape),
-#		Convolution2D(24, 3, 3, border_mode='valid', subsample=(1,2), activation='relu'),
-#		Convolution2D(36, 3, 3, border_mode='valid', activation='relu'),
-#		Convolution3D(48, 2, 2, border_mode='valid', activation='relu'),
-#		Convolution2D(48, 2, 2, border_mode='valid', activation='relu'),
-#		Convolution2D(64, 5, 5, subsample=(2, 2), border_mode="same"),
-#		Dropout(dropout),
-#		Convolution2D(64, 5, 5, subsample=(2, 2), border_mode="same"),
-#		Dropout(dropout),
- #       Flatten(),
-  #      Dense(128,activation='tanh'),
-   #     Dropout(dropout),
-   #     Dense(1,activation='tanh')
-   # ])
 
 my_adam = Adam(lr=lr)
 model.summary()
