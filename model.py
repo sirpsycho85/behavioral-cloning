@@ -13,7 +13,7 @@ from scipy.misc import imresize
 
 # config
 nb_epoch = 50
-lr = 0.001
+lr = 0.0001
 dropout = 0
 
 # Load and preprocess data
@@ -80,10 +80,8 @@ model.add(Convolution2D(48, 2, 2, border_mode='valid', activation='relu'))
 model.add(Flatten())
 model.add(Dense(512))
 model.add(Dropout(dropout))
-model.add(Activation('relu'))
 model.add(Dense(10))
-model.add(Activation('relu'))
-model.add(Dense(1))
+model.add(Dense(1,activation='tanh'))
 
 
 #model = Sequential([
