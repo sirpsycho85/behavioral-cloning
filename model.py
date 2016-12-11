@@ -13,8 +13,8 @@ from scipy.misc import imresize
 
 # config
 nb_epoch = 50
-lr = 0.0001
-dropout = 0
+lr = 0.00005
+dropout = 0.5
 
 # Load and preprocess data
 
@@ -74,14 +74,16 @@ img_shape = (20,64,3)
 
 model = Sequential()
 model.add(BatchNormalization(axis=1, input_shape=(20,64,3)))
-model.add(Convolution2D(16, 3, 3, border_mode='valid', subsample=(2,2), activation='relu'))
-model.add(Convolution2D(24, 3, 3, border_mode='valid', subsample=(1,2), activation='relu'))
-model.add(Convolution2D(36, 3, 3, border_mode='valid', activation='relu'))
-model.add(Convolution2D(48, 2, 2, border_mode='valid', activation='relu'))
-model.add(Convolution2D(48, 2, 2, border_mode='valid', activation='relu'))
+model.add(Convolution2D(24, 5, 5, border_mode='valid', activation='relu'))
+model.add(Convolution2D(36, 5, 5, border_mode='valid', activation='relu'))
+model.add(Convolution2D(48, 3, 3, border_mode='valid', activation='relu'))
+model.add(Convolution2D(64, 3, 3, border_mode='valid', activation='relu'))
+model.add(Convolution2D(64, 3, 3, border_mode='valid', activation='relu'))
 model.add(Flatten())
-model.add(Dense(512))
+model.add(Dense(1164))
 model.add(Dropout(dropout))
+model.add(Dense(100))
+model.add(Dense(50))
 model.add(Dense(10))
 model.add(Dense(1,activation='tanh'))
 
