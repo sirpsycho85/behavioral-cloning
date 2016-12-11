@@ -26,16 +26,17 @@ dropout = 0
 	
 # import csv into list of lists of strings, cells accessible as data[][]
 driving_log = []
-
+num_images = 0
 with open('driving_log.csv','r') as f:
 	datareader = csv.reader(f,delimiter=',')
 	for row in datareader:
 		driving_log.append(row)
+		num_images += 1
 
 # use csv data to set X to the images and y to the steering angles
 # for labels y_train, this is by initializing an array of the right length and updating values
 # for feature data X_train, this is by contatenating images and reshaping into an array of images
-num_images = 1725 #1725 total
+
 y_train = np.zeros(num_images)
 
 for i,row in enumerate(driving_log):
