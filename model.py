@@ -13,7 +13,7 @@ from scipy.misc import imresize
 
 # config
 nb_epoch = 50
-lr = .0005 #0.00005
+lr = .0001 #0.00005
 dropout = 0.5
 
 # Load and preprocess data
@@ -34,7 +34,7 @@ with open('driving_log.csv','r') as f:
 		num_images += 1
 
 # override num images
-# num_images = 3591
+num_images = 1000
 
 
 # use csv data to set X to the images and y to the steering angles
@@ -60,7 +60,8 @@ images_concatenated = np.concatenate((images_concatenated,np.fliplr(images_conca
 X_train = images_concatenated.reshape(-1,20,64,3)
 y_train = np.concatenate((y_train,-1*y_train), axis=0)
 
-# normalize: mean zero and range -0.5 to 0.5
+# normalize
+
 def normalize(X):
     X = X - np.mean(X)
     a,b,xmin,xmax = -0.5,0.5,np.min(X),np.max(X)
@@ -68,7 +69,8 @@ def normalize(X):
 
 X_train = normalize(X_train)
 
-print('fist 10 values of y_train: ',y_train[0:10])
+# shuffle
+
 def shuffle_in_unison(a, b):
     assert len(a) == len(b)
     shuffled_a = np.empty(a.shape, dtype=a.dtype)
@@ -81,69 +83,14 @@ def shuffle_in_unison(a, b):
 
 X_train,y_train = shuffle_in_unison(X_train, y_train)
 
-print('fist 10 values of y_train: ',y_train[0:10])
-
-# sys.exit()
-	# pickle
-#	training_data = {'X_train': X_train, 'y_train': y_train}
-#	pickle.dump(training_data, open('training_data.p','wb'))
-
 # model
 
 img_shape = (20,64,3)
 
 model = Sequential()
-#model.add(BatchNormalization(axis=1, input_shape=(20,64,3)))
-# model.add(BatchNormalization(input_shape=(20,64,3)))
-# model.add(Convolution2D(24, 5, 5, border_mode='valid', activation='relu',input_shape=(20,64,3)))
-# # model.add(BatchNormalization())
-# model.add(Convolution2D(36, 5, 5, border_mode='valid', activation='relu'))
-# # model.add(BatchNormalization())
-# model.add(Convolution2D(48, 3, 3, border_mode='valid', activation='relu'))
-# # model.add(BatchNormalization())
-# model.add(Convolution2D(64, 3, 3, border_mode='valid', activation='relu'))
-# # model.add(BatchNormalization())
-# model.add(Convolution2D(64, 3, 3, border_mode='valid', activation='relu'))
-# model.add(BatchNormalization())
-
 model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_1', input_shape=(20,64,3)))
-# model.add(ZeroPadding2D((1, 1)))
 model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_2'))
-# model.add(MaxPooling2D((2, 2), strides=(2, 2)))
-
-# model.add(ZeroPadding2D((1, 1)))
-# model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_1'))
-# model.add(ZeroPadding2D((1, 1)))
-# model.add(Convolution2D(128, 3, 3, activation='relu', name='conv2_2'))
-# model.add(MaxPooling2D((2, 2), strides=(2, 2)))
-
-# model.add(ZeroPadding2D((1, 1)))
-# model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_1'))
-# model.add(ZeroPadding2D((1, 1)))
-# model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_2'))
-# model.add(ZeroPadding2D((1, 1)))
-# model.add(Convolution2D(256, 3, 3, activation='relu', name='conv3_3'))
-# model.add(MaxPooling2D((2, 2), strides=(2, 2)))
-
-# model.add(ZeroPadding2D((1, 1)))
-# model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_1'))
-# model.add(ZeroPadding2D((1, 1)))
-# model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_2'))
-# model.add(ZeroPadding2D((1, 1)))
-# model.add(Convolution2D(512, 3, 3, activation='relu', name='conv4_3'))
-# model.add(MaxPooling2D((2, 2), strides=(2, 2)))
-
-# model.add(ZeroPadding2D((1, 1)))
-# model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_1'))
-# model.add(ZeroPadding2D((1, 1)))
-# model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_2'))
-# model.add(ZeroPadding2D((1, 1)))
-# model.add(Convolution2D(512, 3, 3, activation='relu', name='conv5_3'))
-# model.add(MaxPooling2D((2, 2), strides=(2, 2)))
-
-
 model.add(Flatten())
-# model.add(Dense(1164))
 model.add(Dropout(dropout))
 model.add(Dense(100))
 model.add(Dense(50))
@@ -151,9 +98,9 @@ model.add(Dense(10))
 model.add(Dropout(dropout))
 model.add(Dense(1,activation='tanh'))
 
+model.summary()
 
 my_adam = Adam(lr=lr)
-model.summary()
 model.compile(optimizer=my_adam,loss='mse')
 model.fit(X_train, y_train, nb_epoch=nb_epoch,validation_split=0.1, shuffle=True)
 
