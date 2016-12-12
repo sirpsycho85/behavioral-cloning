@@ -7,12 +7,13 @@ import pickle
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Convolution2D, Flatten, Lambda, Dropout, BatchNormalization, ZeroPadding2D, MaxPooling2D
 from keras.optimizers import Adam
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 import tensorflow as tf
 import sys
 from scipy.misc import imresize
 
 # config
-nb_epoch = 50
+nb_epoch = 5
 lr = .0001 #0.00005
 dropout = 0.5
 
@@ -34,7 +35,7 @@ with open('driving_log.csv','r') as f:
 		num_images += 1
 
 # override num images
-num_images = 1000
+# num_images = 1000
 
 
 # use csv data to set X to the images and y to the steering angles
@@ -102,11 +103,18 @@ model.summary()
 
 my_adam = Adam(lr=lr)
 model.compile(optimizer=my_adam,loss='mse')
-model.fit(X_train, y_train, nb_epoch=nb_epoch,validation_split=0.1, shuffle=True)
+
+# Model will save the weights whenever validation loss improves
+checkpoint = ModelCheckpoint(filepath = 'model.h5', verbose = 1, save_best_only=True, monitor='val_loss')
+
+# Discontinue training when validation loss fails to decrease
+callback = EarlyStopping(monitor='val_loss', patience=2, verbose=1)
+
+model.fit(X_train, y_train, nb_epoch=nb_epoch,validation_split=0.1, shuffle=True, callbacks=[checkpoint, callback])
 
 # save model
 
 json_string = model.to_json()
 with open('model.json','w') as f:
 	json.dump(json_string,f,ensure_ascii=False)
-model.save_weights('model.h5')
+# model.save_weights('model.h5') # checkpointing weights
