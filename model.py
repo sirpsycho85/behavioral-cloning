@@ -17,15 +17,8 @@ nb_epoch = 50
 lr = 0.0001 #0.0001
 dropout = 0.5
 
-# Load and preprocess data
+# Load data
 
-# if pickled training data already exists, unpickle. Otherwise use the log to read training data and pickle it
-# if(os.path.exists('training_data.p')):
-# 	training_data = pickle.load(open('training_data.p','rb'))
-# 	X_train, y_train = training_data['X_train'], training_data['y_train']
-# else:
-	
-# import csv into list of lists of strings, cells accessible as data[][]
 driving_log = []
 num_images = 0
 with open('driving_log.csv','r') as f:
@@ -90,6 +83,7 @@ img_shape = (20,64,3)
 
 model = Sequential()
 model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_1', input_shape=(20,64,3)))
+model.add(Dropout(dropout))
 model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_2'))
 model.add(Flatten())
 model.add(Dropout(dropout))
