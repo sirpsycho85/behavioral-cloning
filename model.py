@@ -28,7 +28,7 @@ with open('driving_log.csv','r') as f:
 		num_images += 1
 
 # override num images
-# num_images = 1000
+num_images = 3591 # no recovery driving
 
 
 # use csv data to set X to the images and y to the steering angles
