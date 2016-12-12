@@ -14,14 +14,14 @@ from scipy.misc import imresize
 
 # config
 nb_epoch = 50
-lr = 0.0001 #0.0001
+lr = 0.000005 #0.0001
 dropout = 0.5
 
 # Load data
 
 driving_log = []
 num_images = 0
-with open('driving_log.csv','r') as f:
+with open('driving_log_final.csv','r') as f:
 	datareader = csv.reader(f,delimiter=',')
 	for row in datareader:
 		driving_log.append(row)
