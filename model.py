@@ -12,8 +12,8 @@ import sys
 from scipy.misc import imresize
 
 # config
-nb_epoch = 5
-lr = .005 #0.00005
+nb_epoch = 50
+lr = .0005 #0.00005
 dropout = 0.5
 
 # Load and preprocess data
