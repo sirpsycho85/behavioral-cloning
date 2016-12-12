@@ -8,12 +8,12 @@ from keras.models import Sequential
 from keras.layers import Dense, Activation, Convolution2D, Flatten, Lambda, Dropout, BatchNormalization, ZeroPadding2D, MaxPooling2D
 from keras.optimizers import Adam
 import tensorflow as tf
-
+import sys
 from scipy.misc import imresize
 
 # config
-nb_epoch = 50
-lr = 2e-3 #0.00005
+nb_epoch = 5
+lr = .005 #0.00005
 dropout = 0.5
 
 # Load and preprocess data
@@ -34,7 +34,7 @@ with open('driving_log.csv','r') as f:
 		num_images += 1
 
 # override num images
-num_images = 1000
+# num_images = 3591
 
 
 # use csv data to set X to the images and y to the steering angles
@@ -68,8 +68,22 @@ def normalize(X):
 
 X_train = normalize(X_train)
 
-print('max y_train = ',max(y_train))
+print('fist 10 values of y_train: ',y_train[0:10])
+def shuffle_in_unison(a, b):
+    assert len(a) == len(b)
+    shuffled_a = np.empty(a.shape, dtype=a.dtype)
+    shuffled_b = np.empty(b.shape, dtype=b.dtype)
+    permutation = np.random.permutation(len(a))
+    for old_index, new_index in enumerate(permutation):
+        shuffled_a[new_index] = a[old_index]
+        shuffled_b[new_index] = b[old_index]
+    return shuffled_a, shuffled_b
 
+X_train,y_train = shuffle_in_unison(X_train, y_train)
+
+print('fist 10 values of y_train: ',y_train[0:10])
+
+# sys.exit()
 	# pickle
 #	training_data = {'X_train': X_train, 'y_train': y_train}
 #	pickle.dump(training_data, open('training_data.p','wb'))
