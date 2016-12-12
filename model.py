@@ -28,7 +28,7 @@ with open('driving_log_final.csv','r') as f:
 		num_images += 1
 
 # override num images
-num_images = 3591 # no recovery driving
+num_images = 1000 # no recovery driving
 
 
 # use csv data to set X to the images and y to the steering angles
@@ -87,9 +87,9 @@ model.add(Dropout(dropout))
 model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_2'))
 model.add(Flatten())
 model.add(Dropout(dropout))
-model.add(Dense(100))
-model.add(Dense(50))
-model.add(Dense(10))
+model.add(Dense(100, activation='relu'))
+model.add(Dense(50, activation='relu'))
+model.add(Dense(10, activation='relu'))
 model.add(Dropout(dropout))
 model.add(Dense(1,activation='tanh'))
 
@@ -105,6 +105,10 @@ checkpoint = ModelCheckpoint(filepath = 'model.h5', verbose = 1, save_best_only=
 callback = EarlyStopping(monitor='val_loss', patience=2, verbose=1)
 
 model.fit(X_train, y_train, nb_epoch=nb_epoch,validation_split=0.1, shuffle=True, callbacks=[checkpoint, callback])
+
+
+predictions = model.predict(X_train[0:200])
+print('predictions: ', predictions)
 
 # save model
 
