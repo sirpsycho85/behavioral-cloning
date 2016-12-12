@@ -1,2 +1,2 @@
-model.h5
-model.json
+*.h5
+*.json
