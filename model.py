@@ -15,20 +15,22 @@ from scipy.misc import imresize
 # config
 nb_epoch = 50
 lr = 0.000005 #0.0001
-dropout = 0.5
+dropout = 0
+csvpath='driving_log.csv'
+tune = True
 
 # Load data
 
 driving_log = []
 num_images = 0
-with open('driving_log_final.csv','r') as f:
+with open(csvpath,'r') as f:
 	datareader = csv.reader(f,delimiter=',')
 	for row in datareader:
 		driving_log.append(row)
 		num_images += 1
 
 # override num images
-num_images = 1000 # no recovery driving
+# num_images = 1000 # no recovery driving
 
 
 # use csv data to set X to the images and y to the steering angles
@@ -81,19 +83,24 @@ X_train,y_train = shuffle_in_unison(X_train, y_train)
 
 img_shape = (20,64,3)
 
-model = Sequential()
-model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_1', input_shape=(20,64,3)))
-model.add(Dropout(dropout))
-model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_2'))
-model.add(Flatten())
-model.add(Dropout(dropout))
-model.add(Dense(100, activation='relu'))
-model.add(Dense(50, activation='relu'))
-model.add(Dense(10, activation='relu'))
-model.add(Dropout(dropout))
-model.add(Dense(1,activation='tanh'))
+if(tune):
+	with open('model.json', 'r') as jfile:
+		model = model_from_json(json.load(jfile))
+	model.load_weights('model.h5')
 
-model.summary()
+else:
+	model = Sequential()
+	model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_1', input_shape=(20,64,3)))
+	model.add(Dropout(dropout))
+	model.add(Convolution2D(64, 3, 3, activation='relu', name='conv1_2'))
+	model.add(Flatten())
+	model.add(Dropout(dropout))
+	model.add(Dense(100, activation='relu'))
+	model.add(Dense(50, activation='relu'))
+	model.add(Dense(10, activation='relu'))
+	model.add(Dropout(dropout))
+	model.add(Dense(1,activation='tanh'))
+	model.summary()
 
 my_adam = Adam(lr=lr)
 model.compile(optimizer=my_adam,loss='mse')
