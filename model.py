@@ -18,7 +18,7 @@ lr = 0.000005 #0.0001
 dropout = 0.5
 csvpath='driving_log.csv'
 image_folder='IMG'
-from_json = False
+from_json = True
 
 # Load data
 
@@ -31,7 +31,7 @@ with open(csvpath,'r') as f:
 		num_images += 1
 
 # override num images
-num_images = 100 # no recovery driving
+# num_images = 100 # no recovery driving
 
 
 # use csv data to set X to the images and y to the steering angles
