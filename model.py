@@ -16,7 +16,8 @@ from scipy.misc import imresize
 nb_epoch = 50
 lr = 0.000005 #0.0001
 dropout = 0.5
-csvpath='driving_log_final.csv'
+csvpath='driving_log.csv'
+image_folder='IMG'
 from_json = False
 
 # Load data
@@ -40,7 +41,8 @@ num_images = 100 # no recovery driving
 y_train = np.zeros(num_images)
 
 for i,row in enumerate(driving_log):
-	image = cv2.imread(driving_log[i][0])
+	filepath = image_folder + '/' + driving_log[i][0].rsplit('/')[-1]
+	image = cv2.imread(filepath)
 	image = imresize(image, (32,64,3))[12:,:,:]
 	if(i % 100) == 0:
 		print('Images read: ',i)
