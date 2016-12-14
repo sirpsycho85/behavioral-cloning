@@ -4,7 +4,7 @@ import csv
 import json
 import os.path
 import pickle
-from keras.models import Sequential
+from keras.models import Sequential, model_from_json
 from keras.layers import Dense, Activation, Convolution2D, Flatten, Lambda, Dropout, BatchNormalization, ZeroPadding2D, MaxPooling2D
 from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, EarlyStopping
@@ -15,9 +15,9 @@ from scipy.misc import imresize
 # config
 nb_epoch = 50
 lr = 0.000005 #0.0001
-dropout = 0
-csvpath='driving_log.csv'
-tune = True
+dropout = 0.5
+csvpath='driving_log_final.csv'
+from_json = False
 
 # Load data
 
@@ -30,7 +30,7 @@ with open(csvpath,'r') as f:
 		num_images += 1
 
 # override num images
-# num_images = 1000 # no recovery driving
+num_images = 100 # no recovery driving
 
 
 # use csv data to set X to the images and y to the steering angles
@@ -83,7 +83,7 @@ X_train,y_train = shuffle_in_unison(X_train, y_train)
 
 img_shape = (20,64,3)
 
-if(tune):
+if(from_json):
 	with open('model.json', 'r') as jfile:
 		model = model_from_json(json.load(jfile))
 	model.load_weights('model.h5')
