@@ -16,9 +16,9 @@ from scipy.misc import imresize
 nb_epoch = 50
 lr = 0.000005 #0.0001
 dropout = 0.5
-csvpath='driving_log.csv'
-image_folder='IMG'
-from_json = True
+csvpath='saved-model-1/driving_log-1.1.csv'
+image_folder='saved-model-1/IMG-1'
+from_json = False
 
 # Load data
 
@@ -31,7 +31,7 @@ with open(csvpath,'r') as f:
 		num_images += 1
 
 # override num images
-# num_images = 100 # no recovery driving
+num_images = 10 # no recovery driving
 
 
 # use csv data to set X to the images and y to the steering angles
@@ -56,6 +56,8 @@ for i,row in enumerate(driving_log):
 
 images_concatenated = np.concatenate((images_concatenated,np.fliplr(images_concatenated)), axis=0)
 X_train = images_concatenated.reshape(-1,20,64,3)
+print(X_train.shape)
+sys.exit
 y_train = np.concatenate((y_train,-1*y_train), axis=0)
 
 # normalize
