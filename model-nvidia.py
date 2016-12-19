@@ -14,17 +14,22 @@ from scipy.misc import imresize
 import threading
 
 # config
-nb_epoch = 10
-samples_per_epoch = 4096
-lr = 0.0001 #0.0001
-dropout = 0.5
+from_json = False
+from_model='model-2'
+to_model = 'model'
 csvpath='Archive/driving_log-carnd.csv'
 image_folder='Archive/IMG-carnd'
-from_json = False
-t_flip = 1.0 # threshold for flipping
-t_angle = 0.2 # threshold of |angle| to keep, else discard...
-t_keep = 0.5 # threshold to keep small angle
-use_side_cameras = False
+lr = 0.0001 #0.001
+
+nb_sessions = 10
+nb_epoch = 1
+samples_per_epoch = 20000
+dropout = 0.5
+t_flip = 0.5 # threshold for flipping
+t_angle = 0.15 # threshold of |angle| to keep, else discard...
+use_side_cameras = True
+angle_multiplier = 1
+side_camera_added_angle = 0.25
 
 # Load driving log
 
@@ -50,9 +55,11 @@ def get_preprocessed_row(driving_log):
 
 	label = float(driving_log[i][3])
 	if(camera == 1):
-		label = label + 0.2
+		label = label + side_camera_added_angle
 	elif(camera == 2):
-		label = label - 0.2
+		label = label - side_camera_added_angle
+
+	label = label * angle_multiplier
 
 	if(rv_flip > t_flip):
 		image = np.fliplr(image)
@@ -60,7 +67,22 @@ def get_preprocessed_row(driving_log):
 	
 	return image, label
 
-def createBatchGenerator(driving_log,batch_size=32):
+def createBatchGenerator(driving_log,batch_size=256):
+	batch_images = np.zeros((batch_size, 66, 200, 3))
+	batch_steering = np.zeros(batch_size)
+	while 1:
+		for i in range(batch_size):
+			keep_flag = False
+			while(keep_flag==False):
+				rv_keep = np.random.uniform()
+				x,y = get_preprocessed_row(driving_log)
+				if(abs(y) > t_angle or rv_keep > t_keep):
+					keep_flag=True
+			batch_images[i]=x
+			batch_steering[i]=y
+		yield batch_images, batch_steering
+
+def createBatchGeneratorValidation(driving_log,batch_size=256):
 	batch_images = np.zeros((batch_size, 66, 200, 3))
 	batch_steering = np.zeros(batch_size)
 	while 1:
@@ -76,57 +98,61 @@ def createBatchGenerator(driving_log,batch_size=32):
 		yield batch_images, batch_steering
 
 # model
+from_model_json_path = from_model+'.json'
+from_model_h5_path = from_model+'.h5'
+to_model_json_path = to_model+'.json'
+to_model_h5_path = to_model+'.h5'
 
 if(from_json):
-	with open('model.json', 'r') as jfile:
+	with open(from_model_json_path, 'r') as jfile:
 		model = model_from_json(json.load(jfile))
-	model.load_weights('model.h5')
+	model.load_weights(from_model_h5_path)
+	print('tuning existing model - loaded model weights')
 
 else:
 	model = Sequential()
-	# model.add(Lambda(lambda x: normalize(x), input_shape=(66,200,3)))
-	# model.add(Dropout(dropout))
 	model.add(Lambda(lambda x: x/127.5 - 1., input_shape=(66,200,3)))
 	model.add(Convolution2D(24, 5, 5, activation='elu', subsample=(2,2)))
 	model.add(Convolution2D(36, 5, 5, activation='elu', subsample=(2,2)))
 	model.add(Convolution2D(48, 5, 5, activation='elu', subsample=(2,2)))
+	model.add(Dropout(dropout))
 	model.add(Convolution2D(64, 3, 3, activation='elu'))
 	model.add(Convolution2D(64, 3, 3, activation='elu'))
+	model.add(Dropout(dropout))
 	model.add(Flatten())
 	model.add(Dense(1164, activation='elu'))
 	model.add(Dense(100, activation='elu'))
 	model.add(Dense(50, activation='elu'))
 	model.add(Dense(10, activation='elu'))
 	model.add(Dense(1))
-	# model.add(Dense(1,activation='tanh'))
 	model.summary()
 
-my_adam = Adam(lr=lr)
-model.compile(optimizer=my_adam,loss='mse')
+for i in range(nb_sessions):
+	t_keep = 1/(i+1)
+	# t_keep = 1 - i/nb_sessions
+	print('t_keep = ',t_keep)
 
-# Model will save the weights whenever validation loss improves
-checkpoint = ModelCheckpoint(filepath = 'model.h5', verbose = 1, save_best_only=False, monitor='loss')
+	# if it's not first iteration, load the saved model from last iteration
+	if(i>0):
+		with open(from_model_json_path, 'r') as jfile:
+			model = model_from_json(json.load(jfile))
+		model.load_weights(from_model_h5_path)
+		print('loaded weights')
+	
+	# compile model
+	my_adam = Adam(lr=lr)
+	model.compile(optimizer=my_adam,loss='mse')
 
-# Discontinue training when validation loss fails to decrease
-callback = EarlyStopping(monitor='val_loss', patience=2, verbose=1)
+	# Model will save the weights whenever validation loss improves
+	checkpoint = ModelCheckpoint(filepath = to_model_h5_path, verbose = 1, save_best_only=True, monitor='val_loss')
 
-# change probability of keeping small angles
-def change_t_keep():
-	print('hello from callback')
-myCallback = LambdaCallback(on_epoch_begin=change_t_keep())
+	# Discontinue training when validation loss fails to decrease
+	earlyStop = EarlyStopping(monitor='val_loss', patience=2, verbose=1)
 
-# model.fit(X_train, y_train, nb_epoch=nb_epoch,validation_split=0.1, shuffle=True, callbacks=[checkpoint, callback])
-model.fit_generator(createBatchGenerator(driving_log), samples_per_epoch = samples_per_epoch, nb_epoch = nb_epoch,
-	verbose=1, callbacks=[checkpoint,myCallback])
-
-# , validation_data=createBatchGenerator(driving_log),
-	# nb_val_samples=10, class_weight=None, pickle_safe=False
-
-# predictions = model.predict(X_train[0:200])
-# print('predictions: ', predictions)
-
-# save model
-
-json_string = model.to_json()
-with open('model.json','w') as f:
-	json.dump(json_string,f,ensure_ascii=False)
+	model.fit_generator(createBatchGenerator(driving_log), samples_per_epoch = samples_per_epoch, nb_epoch = nb_epoch,
+		verbose=1, callbacks=[checkpoint,earlyStop], validation_data=createBatchGeneratorValidation(driving_log), nb_val_samples = 100)
+	
+	# save model
+	json_string = model.to_json()
+	with open(to_model_json_path,'w') as f:
+		json.dump(json_string,f,ensure_ascii=False)
