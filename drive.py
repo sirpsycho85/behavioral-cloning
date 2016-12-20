@@ -35,7 +35,7 @@ def telemetry(sid, data):
     image = Image.open(BytesIO(base64.b64decode(imgString)))
     image_array = np.asarray(image)
 
-    image_array = imresize(image_array, (32,64,3))[12:,:,:].astype(np.float32)
+    image_array = imresize(image_array, (100,200,3))[34:,:,:].astype(np.float32)
 
     transformed_image_array = image_array[None, :, :, :]
     # This model currently assumes that the features of the model are just the images. Feel free to change this.
@@ -63,12 +63,16 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Remote Driving')
     parser.add_argument('model', type=str,
     help='Path to model definition json. Model weights should be on the same path.')
+
+    parser.add_argument('weights', type=str)
+
     args = parser.parse_args()
     with open(args.model, 'r') as jfile:
         model = model_from_json(json.load(jfile))
 
     model.compile("adam", "mse")
-    weights_file = args.model.replace('json', 'h5')
+    # weights_file = args.model.replace('json', 'h5')
+    weights_file = args.weights
     model.load_weights(weights_file)
 
     # wrap Flask application with engineio's middleware

@@ -16,7 +16,7 @@ import threading
 # config
 from_json = False
 from_model='model-2'
-to_model = 'model'
+to_model = 'model3'
 csvpath='Archive/driving_log-carnd.csv'
 image_folder='Archive/IMG-carnd'
 lr = 0.0001 #0.001
@@ -39,7 +39,14 @@ with open(csvpath,'r') as f:
 	for row in datareader:
 		driving_log.append(row)
 
-# override num images to use
+# preprocessing
+
+def augment_brightness_camera_images(image):
+    image1 = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
+    random_bright = .25+np.random.uniform()
+    image1[:,:,2] = image1[:,:,2]*random_bright
+    image1 = cv2.cvtColor(image1,cv2.COLOR_HSV2RGB)
+    return image1
 
 def get_preprocessed_row(driving_log):
 	i = np.random.randint(len(driving_log))
@@ -65,6 +72,8 @@ def get_preprocessed_row(driving_log):
 		image = np.fliplr(image)
 		label = -1 * label
 	
+	image = augment_brightness_camera_images(image)
+
 	return image, label
 
 def createBatchGenerator(driving_log,batch_size=256):
@@ -100,8 +109,7 @@ def createBatchGeneratorValidation(driving_log,batch_size=256):
 # model
 from_model_json_path = from_model+'.json'
 from_model_h5_path = from_model+'.h5'
-to_model_json_path = to_model+'.json'
-to_model_h5_path = to_model+'.h5'
+to_model_path = to_model+'/' + to_model
 
 if(from_json):
 	with open(from_model_json_path, 'r') as jfile:
@@ -144,7 +152,7 @@ for i in range(nb_sessions):
 	model.compile(optimizer=my_adam,loss='mse')
 
 	# Model will save the weights whenever validation loss improves
-	checkpoint = ModelCheckpoint(filepath = to_model_h5_path, verbose = 1, save_best_only=True, monitor='val_loss')
+	checkpoint = ModelCheckpoint(filepath = to_model_path + '-epoch-' + str(i) + '.h5', verbose = 1, save_best_only=False, monitor='val_loss')
 
 	# Discontinue training when validation loss fails to decrease
 	earlyStop = EarlyStopping(monitor='val_loss', patience=2, verbose=1)
@@ -154,5 +162,5 @@ for i in range(nb_sessions):
 	
 	# save model
 	json_string = model.to_json()
-	with open(to_model_json_path,'w') as f:
+	with open(to_model_path + '.json','w') as f:
 		json.dump(json_string,f,ensure_ascii=False)
