@@ -12,24 +12,33 @@ import tensorflow as tf
 import sys
 from scipy.misc import imresize
 import threading
+# import matplotlib.pyplot as plt
 
 # config
-from_json = False
-from_model='model-2'
-to_model = 'model3'
+to_model = 'model4'
 csvpath='Archive/driving_log-carnd.csv'
 image_folder='Archive/IMG-carnd'
-lr = 0.0001 #0.001
+lr = 0.0001
+from_json = False
+from_model='model-2'
 
 nb_sessions = 10
 nb_epoch = 1
-samples_per_epoch = 20000
+samples_per_epoch = 20000 #20000
 dropout = 0.5
 t_flip = 0.5 # threshold for flipping
 t_angle = 0.15 # threshold of |angle| to keep, else discard...
 use_side_cameras = True
 angle_multiplier = 1
 side_camera_added_angle = 0.25
+trans_range = 10
+
+# validate there's no directory
+if os.path.exists(to_model):
+	print('directory already exists')
+	sys.exit()
+else:
+	os.makedirs(to_model)
 
 # Load driving log
 
@@ -41,6 +50,14 @@ with open(csvpath,'r') as f:
 
 # preprocessing
 
+def trans_image(image,steer,trans_range):
+    tr_x = trans_range*np.random.uniform()-trans_range/2
+    steer_ang = steer + tr_x/trans_range*2*.2
+    tr_y = 40*np.random.uniform()-40/2
+    Trans_M = np.float32([[1,0,tr_x],[0,1,tr_y]])
+    image_tr = cv2.warpAffine(image,Trans_M,(200,66))
+    return image_tr,steer_ang
+
 def augment_brightness_camera_images(image):
     image1 = cv2.cvtColor(image,cv2.COLOR_RGB2HSV)
     random_bright = .25+np.random.uniform()
@@ -48,8 +65,19 @@ def augment_brightness_camera_images(image):
     image1 = cv2.cvtColor(image1,cv2.COLOR_HSV2RGB)
     return image1
 
-def get_preprocessed_row(driving_log):
-	i = np.random.randint(len(driving_log))
+def get_unprocessed_row(driving_log, i=None):
+	if(i == None):
+		i = np.random.randint(len(driving_log))
+	camera = 0
+	filepath = image_folder + '/' + driving_log[i][camera].rsplit('/')[-1]
+	image = cv2.imread(filepath)
+	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+	label = float(driving_log[i][3])
+	return image, label
+
+def get_preprocessed_row(driving_log, i=None):
+	if(i==None):
+		i = np.random.randint(len(driving_log))
 	rv_flip = np.random.uniform()
 	if(use_side_cameras == True):
 		camera = np.random.randint(3)
@@ -59,6 +87,7 @@ def get_preprocessed_row(driving_log):
 	filepath = image_folder + '/' + driving_log[i][camera].rsplit('/')[-1]
 	image = cv2.imread(filepath)
 	image = imresize(image, (100,200,3))[34:,:,:]
+	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
 	label = float(driving_log[i][3])
 	if(camera == 1):
@@ -73,6 +102,8 @@ def get_preprocessed_row(driving_log):
 		label = -1 * label
 	
 	image = augment_brightness_camera_images(image)
+
+	# image,label = trans_image(image,label,trans_range)
 
 	return image, label
 
@@ -105,6 +136,13 @@ def createBatchGeneratorValidation(driving_log,batch_size=256):
 			batch_images[i]=x
 			batch_steering[i]=y
 		yield batch_images, batch_steering
+
+# # testing images
+# x,y = get_preprocessed_row(driving_log,0)
+# plt.imshow(x)
+# plt.title(y)
+# plt.show()
+# sys.exit()
 
 # model
 from_model_json_path = from_model+'.json'
@@ -145,14 +183,15 @@ for i in range(nb_sessions):
 		with open(from_model_json_path, 'r') as jfile:
 			model = model_from_json(json.load(jfile))
 		model.load_weights(from_model_h5_path)
-		print('loaded weights')
+		print('loaded weights from file: ',from_model_h5_path)
 	
 	# compile model
 	my_adam = Adam(lr=lr)
 	model.compile(optimizer=my_adam,loss='mse')
 
 	# Model will save the weights whenever validation loss improves
-	checkpoint = ModelCheckpoint(filepath = to_model_path + '-epoch-' + str(i) + '.h5', verbose = 1, save_best_only=False, monitor='val_loss')
+	from_model_h5_path = to_model_path + '-epoch-' + str(i) + '.h5'
+	checkpoint = ModelCheckpoint(filepath = from_model_h5_path, verbose = 1, save_best_only=False, monitor='val_loss')
 
 	# Discontinue training when validation loss fails to decrease
 	earlyStop = EarlyStopping(monitor='val_loss', patience=2, verbose=1)
