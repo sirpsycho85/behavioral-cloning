@@ -15,7 +15,7 @@ import threading
 # import matplotlib.pyplot as plt
 
 # config
-to_model = 'model4'
+to_model = 'model6'
 csvpath='Archive/driving_log-carnd.csv'
 image_folder='Archive/IMG-carnd'
 lr = 0.0001
@@ -27,7 +27,7 @@ nb_epoch = 1
 samples_per_epoch = 20000 #20000
 dropout = 0.5
 t_flip = 0.5 # threshold for flipping
-t_angle = 0.15 # threshold of |angle| to keep, else discard...
+t_angle = 0.25 # threshold of |angle| to keep, else discard...
 use_side_cameras = True
 angle_multiplier = 1
 side_camera_added_angle = 0.25
