@@ -15,7 +15,7 @@ import threading
 # import matplotlib.pyplot as plt
 
 # config
-to_model = 'model9'
+to_model = 'model8'
 csvpath='Archive/driving_log-carnd.csv'
 image_folder='Archive/IMG-carnd'
 lr = 0.0001
@@ -25,7 +25,7 @@ from_epoch='5'
 
 nb_sessions = 10
 nb_epoch = 1
-samples_per_epoch = 20000 #20000
+samples_per_epoch = 40000 #20000
 dropout = 0.5
 t_flip = 0.5 # threshold for flipping
 t_angle = 0.25 # threshold of |angle| to keep, else discard...
@@ -33,7 +33,14 @@ use_side_cameras = True
 angle_multiplier = 1
 side_camera_added_angle = 0.25
 trans_range = 10
-trans_range_y = 20 #40?
+trans_range_y = 20
+
+# validate there's no directory
+if os.path.exists(to_model):
+	print('directory already exists')
+	sys.exit()
+else:
+	os.makedirs(to_model)
 
 # Load driving log
 
@@ -81,9 +88,7 @@ def get_preprocessed_row(driving_log, i=None):
 
 	filepath = image_folder + '/' + driving_log[i][camera].rsplit('/')[-1]
 	image = cv2.imread(filepath)
-	image = image[60:140,:,:]
-	image = imresize(image, (66,200,3))
-	# image = imresize(image, (100,200,3))[34:,:,:]
+	image = imresize(image, (100,200,3))[34:,:,:]
 	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
 	label = float(driving_log[i][3])
@@ -134,12 +139,6 @@ def createBatchGeneratorValidation(driving_log,batch_size=256):
 			batch_steering[i]=y
 		yield batch_images, batch_steering
 
-# # debugging
-# x,y = get_unprocessed_row(driving_log,6875)
-# plt.imshow(x)
-# plt.show()
-# sys.exit()
-
 # model
 from_model_json_path = from_model + '/' + from_model+'.json'
 # from_model_h5_path = from_model+'.h5'
@@ -170,23 +169,19 @@ else:
 	model.add(Dense(1))
 	model.summary()
 
-# testing images
+# # testing images
 # for i in range(6760,6770,1):
 # 	x,y = get_unprocessed_row(driving_log,i)
 # 	x_pred = imresize(x, (100,200,3))[34:,:,:]
 # 	print(model.predict(np.array([x_pred])))
+# x,y = get_preprocessed_row(driving_log,6775)
+# plt.imshow(x)
+# plt.show()
 # sys.exit()
 
-# validate there's no directory
-if os.path.exists(to_model):
-	print('directory already exists')
-	sys.exit()
-else:
-	os.makedirs(to_model)
-
 for i in range(nb_sessions):
-	t_keep = 1/(i+1)
-	# t_keep = 1 - i/nb_sessions
+	# t_keep = 1/(i+1)
+	t_keep = 1 - i/nb_sessions
 	print('t_keep = ',t_keep)
 
 	# if it's not first iteration, load the saved model from last iteration
