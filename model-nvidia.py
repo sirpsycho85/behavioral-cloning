@@ -12,28 +12,34 @@ import tensorflow as tf
 import sys
 from scipy.misc import imresize
 import threading
-# import matplotlib.pyplot as plt
 
 # config
-to_model = 'model9'
+to_model = 'model18'
 csvpath='Archive/driving_log-carnd.csv'
 image_folder='Archive/IMG-carnd'
 lr = 0.0001
+
 from_json = False
 from_model='model5'
 from_epoch='5'
 
-nb_sessions = 10
+nb_sessions = 8
 nb_epoch = 1
 samples_per_epoch = 20000 #20000
 dropout = 0.5
 t_flip = 0.5 # threshold for flipping
-t_angle = 0.25 # threshold of |angle| to keep, else discard...
+t_angle = 0.15 # threshold of |angle| to keep, else discard...
 use_side_cameras = True
 angle_multiplier = 1
 side_camera_added_angle = 0.25
-trans_range = 10
-trans_range_y = 20 #40?
+trans_range = 20
+trans_range_y = 40 #40?
+
+rows=160
+cols=320
+rows_resized=66
+cols_resized=200
+
 
 # Load driving log
 
@@ -45,12 +51,33 @@ with open(csvpath,'r') as f:
 
 # preprocessing
 
+def add_random_shadow(image):
+	top_y = 320*np.random.uniform()
+	top_x = 0
+	bot_x = 160
+	bot_y = 320*np.random.uniform()
+	image_hls = cv2.cvtColor(image,cv2.COLOR_RGB2HLS)
+	shadow_mask = 0*image_hls[:,:,1]
+	X_m = np.mgrid[0:image.shape[0],0:image.shape[1]][0]
+	Y_m = np.mgrid[0:image.shape[0],0:image.shape[1]][1]
+	shadow_mask[((X_m-top_x)*(bot_y-top_y) -(bot_x - top_x)*(Y_m-top_y) >=0)]=1
+	if np.random.randint(2)==1:
+		random_bright = .5
+		cond1 = shadow_mask==1
+		cond0 = shadow_mask==0
+		if np.random.randint(2)==1:
+			image_hls[:,:,1][cond1] = image_hls[:,:,1][cond1]*random_bright
+		else:
+			image_hls[:,:,1][cond0] = image_hls[:,:,1][cond0]*random_bright    
+	image = cv2.cvtColor(image_hls,cv2.COLOR_HLS2RGB)
+	return image
+
 def trans_image(image,steer,trans_range):
     tr_x = trans_range*np.random.uniform()-trans_range/2
     steer_ang = steer + tr_x/trans_range*2*.2
     tr_y = trans_range_y*np.random.uniform()-trans_range_y/2
     Trans_M = np.float32([[1,0,tr_x],[0,1,tr_y]])
-    image_tr = cv2.warpAffine(image,Trans_M,(200,66))
+    image_tr = cv2.warpAffine(image,Trans_M,(cols,rows))
     return image_tr,steer_ang
 
 def augment_brightness_camera_images(image):
@@ -81,9 +108,7 @@ def get_preprocessed_row(driving_log, i=None):
 
 	filepath = image_folder + '/' + driving_log[i][camera].rsplit('/')[-1]
 	image = cv2.imread(filepath)
-	image = image[60:140,:,:]
-	image = imresize(image, (66,200,3))
-	# image = imresize(image, (100,200,3))[34:,:,:]
+
 	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
 	label = float(driving_log[i][3])
@@ -100,12 +125,17 @@ def get_preprocessed_row(driving_log, i=None):
 	
 	image = augment_brightness_camera_images(image)
 
-	# image,label = trans_image(image,label,trans_range)
+	image,label = trans_image(image,label,trans_range)
+
+	# image = add_random_shadow(image)
+
+	image = image[32:135,:,:]
+	image = imresize(image, (rows_resized,cols_resized,3))
 
 	return image, label
 
 def createBatchGenerator(driving_log,batch_size=256):
-	batch_images = np.zeros((batch_size, 66, 200, 3))
+	batch_images = np.zeros((batch_size, rows_resized, cols_resized, 3))
 	batch_steering = np.zeros(batch_size)
 	while 1:
 		for i in range(batch_size):
@@ -120,7 +150,7 @@ def createBatchGenerator(driving_log,batch_size=256):
 		yield batch_images, batch_steering
 
 def createBatchGeneratorValidation(driving_log,batch_size=256):
-	batch_images = np.zeros((batch_size, 66, 200, 3))
+	batch_images = np.zeros((batch_size, rows_resized, cols_resized, 3))
 	batch_steering = np.zeros(batch_size)
 	while 1:
 		for i in range(batch_size):
@@ -134,17 +164,10 @@ def createBatchGeneratorValidation(driving_log,batch_size=256):
 			batch_steering[i]=y
 		yield batch_images, batch_steering
 
-# # debugging
-# x,y = get_unprocessed_row(driving_log,6875)
-# plt.imshow(x)
-# plt.show()
-# sys.exit()
-
 # model
 from_model_json_path = from_model + '/' + from_model+'.json'
-# from_model_h5_path = from_model+'.h5'
 from_model_h5_path = from_model + '/' + from_model + '-epoch-' + from_epoch + '.h5'
-to_model_path = to_model+'/' + to_model
+to_model_path = to_model + '/' + to_model
 
 if(from_json):
 	with open(from_model_json_path, 'r') as jfile:
@@ -170,13 +193,6 @@ else:
 	model.add(Dense(1))
 	model.summary()
 
-# testing images
-# for i in range(6760,6770,1):
-# 	x,y = get_unprocessed_row(driving_log,i)
-# 	x_pred = imresize(x, (100,200,3))[34:,:,:]
-# 	print(model.predict(np.array([x_pred])))
-# sys.exit()
-
 # validate there's no directory
 if os.path.exists(to_model):
 	print('directory already exists')
@@ -191,10 +207,12 @@ for i in range(nb_sessions):
 
 	# if it's not first iteration, load the saved model from last iteration
 	if(i>0):
+		print('loading model from file: ',from_model_json_path)
 		with open(from_model_json_path, 'r') as jfile:
 			model = model_from_json(json.load(jfile))
+		print('loading weights from file: ',from_model_h5_path)
 		model.load_weights(from_model_h5_path)
-		print('loaded weights from file: ',from_model_h5_path)
+		print('loaded')
 	
 	# compile model
 	my_adam = Adam(lr=lr)
@@ -211,6 +229,7 @@ for i in range(nb_sessions):
 		verbose=1, callbacks=[checkpoint,earlyStop], validation_data=createBatchGeneratorValidation(driving_log), nb_val_samples = 100)
 	
 	# save model
+	from_model_json_path = to_model_path + '.json'
 	json_string = model.to_json()
-	with open(to_model_path + '.json','w') as f:
+	with open(from_model_json_path,'w') as f:
 		json.dump(json_string,f,ensure_ascii=False)
