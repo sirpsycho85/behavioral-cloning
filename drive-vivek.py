@@ -35,8 +35,12 @@ def telemetry(sid, data):
     image = Image.open(BytesIO(base64.b64decode(imgString)))
     image_array = np.asarray(image)
 
+    # nvidia size
+    # image_array = imresize(image_array, (100,200,3))[34:,:,:].astype(np.float32)
+
+    # vivek size
     image_array = image_array[32:135,:,:]
-    image_array = imresize(image_array, (66,200,3))
+    image_array = imresize(image_array, (64,64,3))
 
     transformed_image_array = image_array[None, :, :, :]
     # This model currently assumes that the features of the model are just the images. Feel free to change this.

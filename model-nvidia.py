@@ -14,7 +14,7 @@ from scipy.misc import imresize
 import threading
 
 # config
-to_model = 'model18'
+to_model = 'model19'
 csvpath='Archive/driving_log-carnd.csv'
 image_folder='Archive/IMG-carnd'
 lr = 0.0001
@@ -26,7 +26,7 @@ from_epoch='5'
 nb_sessions = 8
 nb_epoch = 1
 samples_per_epoch = 20000 #20000
-dropout = 0.5
+dropout = 0.0
 t_flip = 0.5 # threshold for flipping
 t_angle = 0.15 # threshold of |angle| to keep, else discard...
 use_side_cameras = True

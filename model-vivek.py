@@ -32,7 +32,7 @@ t_angle = 0.15 # threshold of |angle| to keep, else discard...
 use_side_cameras = True
 angle_multiplier = 1
 side_camera_added_angle = 0.25
-trans_range = 80
+trans_range = 20
 trans_range_y = 0 #40?
 
 cols=320
@@ -98,6 +98,47 @@ def get_unprocessed_row(driving_log, i=None):
 	return image, label
 
 def get_preprocessed_row(driving_log, i=None):
+	if(i==None):
+		i = np.random.randint(len(driving_log))
+	rv_flip = np.random.uniform()
+	if(use_side_cameras == True):
+		camera = np.random.randint(3)
+	else:
+		camera = 0
+
+	filepath = image_folder + '/' + driving_log[i][camera].rsplit('/')[-1]
+	image = cv2.imread(filepath)
+
+	image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+	label = float(driving_log[i][3])
+	if(camera == 1):
+		label = label + side_camera_added_angle
+	elif(camera == 2):
+		label = label - side_camera_added_angle
+
+	label = label * angle_multiplier
+
+	if(rv_flip > t_flip):
+		image = np.fliplr(image)
+		label = -1 * label
+	
+	image = augment_brightness_camera_images(image)
+
+	image,label = trans_image(image,label,trans_range)
+
+	# image = add_random_shadow(image)
+
+	image = image[32:135,:,:]
+	image = imresize(image, (64,64,3))
+
+	return image, label
+
+def get_preprocessed_row2(driving_log, i=None):
+	# 1/5 of the time straight, left, right, recovery left, recovery right
+	# straight just samples until there is a small angle
+	
+
 	if(i==None):
 		i = np.random.randint(len(driving_log))
 	rv_flip = np.random.uniform()

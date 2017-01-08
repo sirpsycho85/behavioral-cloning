@@ -22,7 +22,7 @@ from_json = False
 from_model='model5'
 from_epoch='5'
 
-nb_sessions = 8 # number of times I loop with samples_per_epoch in each loop
+nb_sessions = 2
 nb_epoch = 1
 samples_per_epoch = 20000 #20000
 dropout = 0.5
