@@ -6,6 +6,8 @@ The goal of this project was to use camera data from a simulated car to set the 
 - The raw data came from Udacity, capturing about 8000 points in time on Track 1, using three cameras for each (center, left, and right).
 - A lot of augmentation was applied to the data, as noted further below, per the advice of Vivek Yadav, another student in the course (https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.u75jlyg06).
 
+The best-performing model I tested is included in the repo: model19.json with the weights model19-epoch-6.h5
+
 # Initial approach
 I initially tried training using my own unmodified data. However, this proved to be ineffective. In particular, the car would tend to overtrain initially on batches of small-angle or large-angle data, and go either straight ahead of immediately turn. In either case, it did not have the ability to recover once it started to turn towards one of the lane lines. I did not want to take the approach of doing additional training on "problem spots", as I wanted to take an approach that wasn't track-specific. Per the suggestion of Vivek Yadav, I took the the method of augmentation - creating additional images from my existing images to represent a more varied set of data.
 
@@ -63,6 +65,8 @@ Translating the image and adjusting the steering angle is another way approach t
 
 # Training
 For each mini-batch, I would generate a set of images using the augmentation techniques above. Then, a percentage of the time p, I would discard the image if the angle was below a minimum angle threshold (a hyperparameter which I eventually set to 0.15). p itself was reduced between each epoch, so for the first epoch I always discarded a sample with a small angle, but with each subsequent epoch I was more and more likely to use it. This approach significantly increased the model's ability to recover in spots that were challenging on the course, such as sharp turns.
+
+After each epoch I saved the weights and later tested the results. The best-performing one is included in the repo.
 
 I used an adam optimizer and mean squared error as my cost function (error between labeled angle and predicted angle).
 
