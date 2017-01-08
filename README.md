@@ -69,7 +69,7 @@ After each epoch I saved the weights and later tested the results. The best-perf
 I used an adam optimizer and mean squared error as my cost function (error between labeled angle and predicted angle).
 
 # Generalization
-I tran the car on track 2 as well. At throttle = 2 it could not take the hill, at throttle = 3 it crashed quickly. I started binary searching for a good throttle level in between
+I tran the car on track 2 as well. At throttle = 2 it could not take the hill, at throttle = 3 it crashed quickly. I started binary searching for a good throttle level in between. At 2.75, I got all the way to the roadblock!
 
 # Discarded ideas
 There were other ideas that I tried but eventually did not use.
