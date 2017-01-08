@@ -68,9 +68,15 @@ After each epoch I saved the weights and later tested the results. The best-perf
 
 I used an adam optimizer and mean squared error as my cost function (error between labeled angle and predicted angle).
 
-# Other ideas
+# Generalization
+I tran the car on track 2 as well. At throttle = 2 it could not take the hill, at throttle = 3 it crashed quickly. I started binary searching for a good throttle level in between
+
+# Discarded ideas
 There were other ideas that I tried but eventually did not use.
 - Just multiplying all of the angles by a factor (another hyperparameter), but this proved less effective than translations.
 - Different architectures, including my own and one that Vivek Yadav suggested. These did not perform as well as nvidia in combination with the above augemntation and training approach.
 - Dropout was sometimes used. In the end, my very best model did not use dropout during training.
 - Tuning a model - I wanted to see if I could get it working by training at once on a large set of data, rather than tuning a model as I encountered problem spots in the road.
+
+# Future improvements
+I would love to try and control the throttle as well as the angle, which is more similar to a real self-driving-car. Other than that, I would personally want to focus more on understanding in greater depth why certain approaches work and the mathematics behind deep learning, not just to try more things out :)
