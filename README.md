@@ -6,8 +6,6 @@ The goal of this project was to use camera data from a simulated car to set the 
 - The raw data came from Udacity, capturing about 8000 points in time on Track 1, using three cameras for each (center, left, and right).
 - A lot of augmentation was applied to the data, as noted further below, per the advice of Vivek Yadav, another student in the course (https://chatbotslife.com/using-augmentation-to-mimic-human-driving-496b569760a9#.u75jlyg06).
 
-The best-performing model I tested is included in the repo: model19.json with the weights model19-epoch-6.h5
-
 # Initial approach
 I initially tried training using my own unmodified data. However, this proved to be ineffective. In particular, the car would tend to overtrain initially on batches of small-angle or large-angle data, and go either straight ahead of immediately turn. In either case, it did not have the ability to recover once it started to turn towards one of the lane lines. I did not want to take the approach of doing additional training on "problem spots", as I wanted to take an approach that wasn't track-specific. Per the suggestion of Vivek Yadav, I took the the method of augmentation - creating additional images from my existing images to represent a more varied set of data.
 
